@@ -155,6 +155,13 @@
             font-weight: bold;
             color: #00FF00;
         }
+
+        #rabbitEmoji {
+            display: none;
+            font-size: 24px;
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -169,6 +176,7 @@
     <p>Your ID: <span id="peerId"></span></p>
     <input type="text" id="connectInput" placeholder="Enter peer ID to connect">
     <button id="connectButton">Connect</button>
+    <div id="rabbitEmoji">🐇</div>
 
     <audio id="receiveSound" src="https://www.soundjay.com/button/beep-08b.wav" preload="auto"></audio>
 
@@ -185,6 +193,7 @@
         peer.on('connection', (connection) => {
             conn = connection;
             setupConnection();
+            document.getElementById('rabbitEmoji').style.display = 'block'; // Show rabbit emoji when connected
         });
 
         document.getElementById('connectButton').addEventListener('click', () => {
@@ -256,8 +265,8 @@
             const peerId = params.get('peer');
             if (peerId && peerId !== currentId) {
                 document.getElementById('connectInput').value = peerId;
-                conn = peer.connect(peerId);
-                setupConnection();
+                // Automatically click the connect button
+                document.getElementById('connectButton').click();
             }
         }
 
