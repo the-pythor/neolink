@@ -185,8 +185,6 @@
     <button id="connectButton">Connect</button>
     <div id="rabbitEmoji">🐇</div>
 
-    <audio id="receiveSound" src="https://www.soundjay.com/button/beep-08b.wav" preload="auto"></audio>
-
     <script>
         const peer = new Peer(generateReadableId());
         let conn;
@@ -216,7 +214,6 @@
         function setupConnection() {
             conn.on('data', (data) => {
                 addMessage(data, 'Peer');
-                playReceiveSound();
                 document.getElementById('connectedPeer').textContent = `Connected Peer: ${conn.peer}`;
             });
 
@@ -252,11 +249,6 @@
             messageElement.classList.add(sender === 'You' ? 'you' : 'peer');
             messagesDiv.appendChild(messageElement);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        function playReceiveSound() {
-            const sound = document.getElementById('receiveSound');
-            sound.play();
         }
 
         function generateQRCode(id) {
@@ -295,6 +287,12 @@
         // Hide tooltip when not hovering
         document.getElementById('title').addEventListener('mouseout', () => {
             document.getElementById('tooltip').style.display = 'none';
+        });
+
+        // Prevent page reload or navigation
+        window.addEventListener('beforeunload', (event) => {
+            event.preventDefault();
+            event.returnValue = ''; // Most browsers show a generic message
         });
     </script>
 </body>
