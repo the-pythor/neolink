@@ -156,6 +156,12 @@
             color: #00FF00;
         }
 
+        #connectedPeer {
+            font-weight: bold;
+            color: #00FF00;
+            margin-top: 10px;
+        }
+
         #rabbitEmoji {
             display: none;
             font-size: 24px;
@@ -174,6 +180,7 @@
     <input type="text" id="messageInput" placeholder="Type a message...">
     <button id="sendButton">Send</button>
     <p>Your ID: <span id="peerId"></span></p>
+    <p id="connectedPeer">Connected Peer: None</p>
     <input type="text" id="connectInput" placeholder="Enter peer ID to connect">
     <button id="connectButton">Connect</button>
     <div id="rabbitEmoji">🐇</div>
@@ -196,6 +203,10 @@
             document.getElementById('rabbitEmoji').style.display = 'block'; // Show rabbit emoji when connected
         });
 
+        peer.on('disconnected', () => {
+            document.getElementById('connectedPeer').textContent = 'Connected Peer: None';
+        });
+
         document.getElementById('connectButton').addEventListener('click', () => {
             const peerId = document.getElementById('connectInput').value;
             conn = peer.connect(peerId);
@@ -206,6 +217,12 @@
             conn.on('data', (data) => {
                 addMessage(data, 'Peer');
                 playReceiveSound();
+                document.getElementById('connectedPeer').textContent = `Connected Peer: ${conn.peer}`;
+            });
+
+            conn.on('close', () => {
+                document.getElementById('connectedPeer').textContent = 'Connected Peer: None';
+                document.getElementById('rabbitEmoji').style.display = 'none'; // Hide rabbit emoji when disconnected
             });
         }
 
