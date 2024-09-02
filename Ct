@@ -1,0 +1,158 @@
+using cAlgo.API;
+using cAlgo.API.Indicators;
+using cAlgo.API.Internals;
+using System;
+
+namespace cAlgo.Indicators
+{
+    [Indicator(IsOverlay = true, TimeZone = TimeZones.UTC)]
+    public class ICTSessions : Indicator
+    {
+        // Parameters for sessions
+        [Parameter("Max Timeframe", DefaultValue = 15)]
+        public int MaxTimeframe { get; set; }
+
+        [Parameter("Asia Session Start", DefaultValue = "20:00")]
+        public string AsiaSessionStart { get; set; }
+
+        [Parameter("Asia Session End", DefaultValue = "00:00")]
+        public string AsiaSessionEnd { get; set; }
+
+        [Parameter("London Session Start", DefaultValue = "02:00")]
+        public string LondonSessionStart { get; set; }
+
+        [Parameter("London Session End", DefaultValue = "05:00")]
+        public string LondonSessionEnd { get; set; }
+
+        [Parameter("New York AM Session Start", DefaultValue = "09:30")]
+        public string NewYorkAMSessionStart { get; set; }
+
+        [Parameter("New York AM Session End", DefaultValue = "12:00")]
+        public string NewYorkAMSessionEnd { get; set; }
+
+        [Parameter("New York Lunch Session Start", DefaultValue = "12:00")]
+        public string NewYorkLunchSessionStart { get; set; }
+
+        [Parameter("New York Lunch Session End", DefaultValue = "13:30")]
+        public string NewYorkLunchSessionEnd { get; set; }
+
+        [Parameter("New York PM Session Start", DefaultValue = "13:30")]
+        public string NewYorkPMSessionStart { get; set; }
+
+        [Parameter("New York PM Session End", DefaultValue = "16:00")]
+        public string NewYorkPMSessionEnd { get; set; }
+
+        // Colors for session boxes and lines
+        [Parameter("Asia Box Color", DefaultValue = "Orange")]
+        public string AsiaBoxColor { get; set; }
+
+        [Parameter("London Box Color", DefaultValue = "Red")]
+        public string LondonBoxColor { get; set; }
+
+        [Parameter("New York AM Box Color", DefaultValue = "Green")]
+        public string NewYorkAMBoxColor { get; set; }
+
+        [Parameter("New York Lunch Box Color", DefaultValue = "Gray")]
+        public string NewYorkLunchBoxColor { get; set; }
+
+        [Parameter("New York PM Box Color", DefaultValue = "Blue")]
+        public string NewYorkPMBoxColor { get; set; }
+
+        [Parameter("Line Width", DefaultValue = 1)]
+        public int LineWidth { get; set; }
+
+        [Parameter("Show Session High/Low Lines", DefaultValue = true)]
+        public bool ShowHighLowLines { get; set; }
+
+        [Parameter("Show Session Mid-Line (50%)", DefaultValue = false)]
+        public bool ShowMidLine { get; set; }
+
+        protected override void Initialize()
+        {
+            // Initialization logic
+        }
+
+        public override void Calculate(int index)
+        {
+            var currentTime = MarketSeries.OpenTime[index];
+
+            // Asia Session
+            if (IsInSession(currentTime, AsiaSessionStart, AsiaSessionEnd))
+            {
+                DrawSession("Asia", currentTime, AsiaBoxColor, index);
+            }
+
+            // London Session
+            if (IsInSession(currentTime, LondonSessionStart, LondonSessionEnd))
+            {
+                DrawSession("London", currentTime, LondonBoxColor, index);
+            }
+
+            // New York AM Session
+            if (IsInSession(currentTime, NewYorkAMSessionStart, NewYorkAMSessionEnd))
+            {
+                DrawSession("NY AM", currentTime, NewYorkAMBoxColor, index);
+            }
+
+            // New York Lunch Session
+            if (IsInSession(currentTime, NewYorkLunchSessionStart, NewYorkLunchSessionEnd))
+            {
+                DrawSession("NY Lunch", currentTime, NewYorkLunchBoxColor, index);
+            }
+
+            // New York PM Session
+            if (IsInSession(currentTime, NewYorkPMSessionStart, NewYorkPMSessionEnd))
+            {
+                DrawSession("NY PM", currentTime, NewYorkPMBoxColor, index);
+            }
+        }
+
+        private bool IsInSession(DateTime currentTime, string sessionStart, string sessionEnd)
+        {
+            var start = DateTime.Parse(sessionStart);
+            var end = DateTime.Parse(sessionEnd);
+
+            if (start > end)
+            {
+                // Handle overnight sessions (e.g., 20:00 to 00:00)
+                return currentTime.TimeOfDay >= start.TimeOfDay || currentTime.TimeOfDay <= end.TimeOfDay;
+            }
+
+            return currentTime.TimeOfDay >= start.TimeOfDay && currentTime.TimeOfDay <= end.TimeOfDay;
+        }
+
+        private void DrawSession(string sessionName, DateTime currentTime, string boxColor, int index)
+        {
+            // Get high and low prices for the session
+            double sessionHigh = MarketSeries.High.Maximum(index);
+            double sessionLow = MarketSeries.Low.Minimum(index);
+            DateTime sessionStartTime = MarketSeries.OpenTime[index];
+
+            // Draw a rectangle for the session
+            Chart.DrawRectangle(sessionName + "Box" + index, sessionStartTime, sessionLow, currentTime, sessionHigh,
+                                Color.FromName(boxColor), LineWidth, Color.FromName(boxColor).SetTransparency(80));
+
+            // Draw session high/low lines
+            if (ShowHighLowLines)
+            {
+                Chart.DrawLine(sessionName + "HighLine" + index, sessionStartTime, sessionHigh, currentTime, sessionHigh,
+                               Color.FromName(boxColor), LineWidth, LineStyle.Solid);
+
+                Chart.DrawLine(sessionName + "LowLine" + index, sessionStartTime, sessionLow, currentTime, sessionLow,
+                               Color.FromName(boxColor), LineWidth, LineStyle.Solid);
+            }
+
+            // Draw session mid-line (50%)
+            if (ShowMidLine)
+            {
+                double sessionMid = (sessionHigh + sessionLow) / 2;
+                Chart.DrawLine(sessionName + "MidLine" + index, sessionStartTime, sessionMid, currentTime, sessionMid,
+                               Color.FromName(boxColor), LineWidth, LineStyle.Dotted);
+            }
+
+            // Place a label for the session
+            Chart.DrawText(sessionName + "Label" + index, sessionName, currentTime, sessionHigh, 
+                           VerticalAlignment.Top, HorizontalAlignment.Center, Color.Black);
+        }
+    }
+}
